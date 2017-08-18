@@ -19,12 +19,43 @@
 #define TERMINAL_HPP
 
 #include <string>
+#include <memory>
 
 struct Terminal
 {
-    virtual std::string name() const = 0;
+    virtual inline std::string name() const
+    {
+        return "Terminal";
+    }
+
+    virtual std::unique_ptr<Terminal> clone() const
+    {
+        return std::make_unique<Terminal>(*this);
+    }
 
     std::string data;
+
+    struct FileInfo
+    {
+        std::string filename { "INVALID" };
+        int line { -1 };
+        int column { -1 };
+    } fileinfo;
 };
+
+#define MAKE_TERMINAL(TerminalName) \
+struct TerminalName : public Terminal \
+{ \
+    virtual inline std::string name() const override \
+    { \
+        return #TerminalName; \
+    } \
+    virtual std::unique_ptr<Terminal> clone() const override \
+    { \
+        return std::make_unique<TerminalName>(*this); \
+    } \
+};
+
+MAKE_TERMINAL(_EOF)
 
 #endif // TERMINAL_HPP

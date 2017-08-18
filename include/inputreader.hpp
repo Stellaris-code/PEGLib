@@ -33,12 +33,18 @@ public:
     };
 
 public:
+    InputReader() = default;
+    explicit InputReader(std::vector<std::unique_ptr<Terminal>>&& symbols);
+
     template <typename T>
-    const Terminal& lookahead();
+    const Terminal* fetch();
 
     void consume();
 
     void reset_lookahead();
+
+    void push_state();
+    void pop_state();
 
     void set_policy(Policy policy);
 

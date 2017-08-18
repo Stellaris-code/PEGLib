@@ -23,6 +23,18 @@
 
 namespace
 {
+TEST(Lits, True)
+{
+    InputReader r;
+    ASSERT_TRUE(_true::match(r));
+}
+
+TEST(Lits, False)
+{
+    InputReader r;
+    ASSERT_FALSE(_false::match(r));
+}
+
 TEST(SeqTest, True)
 {
     InputReader r;
@@ -37,5 +49,20 @@ TEST(SeqTest, False)
     EXPECT_FALSE((seq<_false>::match(r)));
     EXPECT_FALSE((seq<_false, _false>::match(r)));
     EXPECT_FALSE((seq<_false, _true, _true>::match(r)));
+}
+
+TEST(OrTest, True)
+{
+    InputReader r;
+    EXPECT_TRUE((_or<_true>::match(r)));
+    EXPECT_TRUE((_or<_true, _true, _true>::match(r)));
+    EXPECT_TRUE((_or<_true, _true, _false, _true, _true>::match(r)));
+}
+
+TEST(OrTest, False)
+{
+    InputReader r;
+    EXPECT_FALSE((_or<_false>::match(r)));
+    EXPECT_FALSE((_or<_false, _false, _false>::match(r)));
 }
 }

@@ -22,26 +22,50 @@
 
 #include "inputreader.hpp"
 
-struct _true
+template <typename Derived>
+struct GrammarRule
 {
-    static bool match(InputReader&)
+    static bool match(InputReader& reader)
+    {
+        reader.push_state();
+        bool result = Derived::match_impl(reader);
+        reader.pop_state();
+
+        return result;
+    }
+};
+
+struct _true : public GrammarRule<_true>
+{
+    static bool match_impl(InputReader&)
     {
         return true;
     }
 };
 
-struct _false
+struct _false : public GrammarRule<_false>
 {
-    static bool match(InputReader&)
+    static bool match_impl(InputReader&)
     {
         return false;
     }
 };
 
-template <typename... Rules>
-struct seq
+template <typename T>
+struct term : public GrammarRule<term<T>>
 {
-    static bool match(InputReader& reader)
+    static_assert(std::is_base_of<Terminal, T>::value);
+
+    static bool match_impl(InputReader& reader)
+    {
+        return reader.fetch<T>();
+    }
+};
+
+template <typename... Rules>
+struct seq : public GrammarRule<seq<Rules...>>
+{
+    static bool match_impl(InputReader& reader)
     {
         auto last_state = reader.policy(); // TODO : faire un système de pile de states
         reader.set_policy(InputReader::Policy::Ignore);
@@ -51,29 +75,33 @@ struct seq
         {
             reader.consume();
         }
+        else
+        {
+            reader.reset_lookahead();
+        }
 
         return valid;
     }
 
 private:
-    template <typename Rule, typename... Rest, typename std::enable_if_t<sizeof...(Rest) == 0>* = nullptr>
+    template <typename Rule, typename... Rest>
     static bool seq_impl(InputReader& reader)
     {
-        return Rule::match(reader);
-    }
-
-    template <typename Rule, typename... Rest, typename std::enable_if_t<sizeof...(Rest) != 0>* = nullptr>
-    static bool seq_impl(InputReader& reader)
-    {
-        return Rule::match(reader) && seq_impl<Rest...>(reader);
+        if constexpr (sizeof...(Rest) == 0)
+        {
+            return Rule::match(reader);
+        }
+        else
+        {
+            return Rule::match(reader) && seq_impl<Rest...>(reader);
+        }
     }
 };
 
-// TODO : implémenter _or correctement !
 template <typename... Rules>
-struct _or
+struct _or : public GrammarRule<_or<Rules...>>
 {
-    static bool match(InputReader& reader)
+    static bool match_impl(InputReader& reader)
     {
         return or_impl<Rules...>(reader);
     }
@@ -102,9 +130,9 @@ private:
 };
 
 template <typename Rule>
-struct star
+struct star : public GrammarRule<star<Rule>>
 {
-    static bool match(InputReader& reader)
+    static bool match_impl(InputReader& reader)
     {
         while (Rule::match(reader)){}
 
@@ -115,9 +143,9 @@ struct star
 };
 
 template <typename Rule>
-struct plus
+struct plus : public GrammarRule<plus<Rule>>
 {
-    static bool match(InputReader& reader)
+    static bool match_impl(InputReader& reader)
     {
         if (!Rule::match(reader)) return false;
 
@@ -130,9 +158,9 @@ struct plus
 };
 
 template <typename Rule>
-struct opt
+struct opt : public GrammarRule<opt<Rule>>
 {
-    static bool match(InputReader& reader)
+    static bool match_impl(InputReader& reader)
     {
         if (Rule::match(reader))
         {
@@ -147,9 +175,9 @@ struct opt
 };
 
 template <typename Rule>
-struct _and
+struct _and : public GrammarRule<_and<Rule>>
 {
-    static bool match(InputReader& reader)
+    static bool match_impl(InputReader& reader)
     {
         bool result = Rule::match(reader);
         reader.reset_lookahead();
@@ -158,9 +186,9 @@ struct _and
 };
 
 template <typename Rule>
-struct _not
+struct _not : public GrammarRule<_not<Rule>>
 {
-    static bool match(InputReader& reader)
+    static bool match_impl(InputReader& reader)
     {
         bool result = Rule::match(reader);
         reader.reset_lookahead();

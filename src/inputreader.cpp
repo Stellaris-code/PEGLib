@@ -20,9 +20,25 @@
 
 #include <cassert>
 
+InputReader::InputReader(std::vector<std::unique_ptr<Terminal>>&& symbols)
+{
+    m_terminals = std::move(symbols);
+    reset_lookahead();
+}
+
 void InputReader::reset_lookahead()
 {
     m_lookahead_pos = m_terminals.end();
+}
+
+void InputReader::push_state()
+{
+    // TODO : implémenter !
+}
+
+void InputReader::pop_state()
+{
+    // TODO : implémenter !
 }
 
 void InputReader::consume()

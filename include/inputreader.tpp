@@ -18,11 +18,18 @@
 #include <cassert>
 
 template <typename T>
-const Terminal& InputReader::lookahead()
+const Terminal* InputReader::fetch()
 {
-    assert(m_lookahead_pos != m_terminals.begin());
+    static_assert(std::is_base_of_v<Terminal, T>);
+    if (m_lookahead_pos == m_terminals.begin())
+    {
+        return nullptr;
+    }
 
-    --m_lookahead_pos;
+    if (typeid(T) != typeid(**(m_lookahead_pos - 1)))
+    {
+        return nullptr;
+    }
 
-    return **m_lookahead_pos;
+    return (*(--m_lookahead_pos)).get();
 }

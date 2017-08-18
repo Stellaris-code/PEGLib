@@ -1,4 +1,4 @@
-file(GLOB_RECURSE test_files "*.cpp")
+file(GLOB_RECURSE test_files "*.cpp" "*.hpp")
 
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
