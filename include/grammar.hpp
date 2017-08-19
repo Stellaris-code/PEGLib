@@ -21,6 +21,8 @@
 #include <type_traits>
 
 #include "inputreader.hpp"
+#include "parse_error.hpp"
+#include "demangle.hpp"
 
 template <typename Derived>
 struct GrammarRule
@@ -33,9 +35,15 @@ struct GrammarRule
 
         return result;
     }
+
+    [[noreturn]]
+    static void fail(InputReader& reader, const std::string& error)
+    {
+        throw_parse_error(reader.current_pos(), error);
+    }
 };
 
-struct _true : public GrammarRule<_true>
+struct _true : GrammarRule<_true>
 {
     static bool match_impl(InputReader&)
     {
@@ -43,7 +51,7 @@ struct _true : public GrammarRule<_true>
     }
 };
 
-struct _false : public GrammarRule<_false>
+struct _false : GrammarRule<_false>
 {
     static bool match_impl(InputReader&)
     {
@@ -52,7 +60,7 @@ struct _false : public GrammarRule<_false>
 };
 
 template <typename T>
-struct term : public GrammarRule<term<T>>
+struct term : GrammarRule<term<T>>
 {
     static_assert(std::is_base_of<Terminal, T>::value);
 
@@ -63,7 +71,7 @@ struct term : public GrammarRule<term<T>>
 };
 
 template <typename... Rules>
-struct seq : public GrammarRule<seq<Rules...>>
+struct seq : GrammarRule<seq<Rules...>>
 {
     static bool match_impl(InputReader& reader)
     {
@@ -92,7 +100,7 @@ private:
 };
 
 template <typename... Rules>
-struct _or : public GrammarRule<_or<Rules...>>
+struct _or : GrammarRule<_or<Rules...>>
 {
     static bool match_impl(InputReader& reader)
     {
@@ -126,7 +134,7 @@ private:
 };
 
 template <typename Rule>
-struct star : public GrammarRule<star<Rule>>
+struct star : GrammarRule<star<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
@@ -139,7 +147,7 @@ struct star : public GrammarRule<star<Rule>>
 };
 
 template <typename Rule>
-struct plus : public GrammarRule<plus<Rule>>
+struct plus : GrammarRule<plus<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
@@ -158,7 +166,7 @@ struct plus : public GrammarRule<plus<Rule>>
 };
 
 template <typename Rule>
-struct opt : public GrammarRule<opt<Rule>>
+struct opt : GrammarRule<opt<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
@@ -174,7 +182,7 @@ struct opt : public GrammarRule<opt<Rule>>
 };
 
 template <typename Rule>
-struct _and : public GrammarRule<_and<Rule>>
+struct _and : GrammarRule<_and<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
@@ -187,7 +195,7 @@ struct _and : public GrammarRule<_and<Rule>>
 };
 
 template <typename Rule>
-struct _not : public GrammarRule<_not<Rule>>
+struct _not : GrammarRule<_not<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
@@ -198,5 +206,24 @@ struct _not : public GrammarRule<_not<Rule>>
         return !result;
     }
 };
+
+template <typename... Rule>
+struct must : GrammarRule<must<Rule...>>
+{
+    static bool match_impl(InputReader& reader)
+    {
+        if (!seq<Rule...>::match(reader))
+        {
+            must::fail(reader, "Expected " + demangle<seq<Rule...>>());
+        }
+        else
+        {
+            return true;
+        }
+    }
+};
+
+template <typename R, typename... S>
+struct if_must : seq<R, must<S...>> {};
 
 #endif // GRAMMAR_HPP

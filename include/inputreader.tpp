@@ -18,6 +18,8 @@
 #include <cassert>
 #include <iostream>
 
+#include "parse_error.hpp"
+
 template <typename T>
 const Terminal* InputReader::fetch()
 {
@@ -30,7 +32,7 @@ const Terminal* InputReader::fetch()
         }
         else
         {
-            throw ParseError("Expected '" + T::name() + "' got 'End Of File' !");
+            throw_parse_error(current_pos(), "Expected '" + T::name() + "' got 'End Of File' !");
         }
     }
 
@@ -42,7 +44,7 @@ const Terminal* InputReader::fetch()
         }
         else
         {
-            throw ParseError("Expected '" + T::name() + "' got '" + (*(m_lookahead_pos - 1))->dyn_name() + "' !");
+            throw_parse_error(current_pos(), "Expected '" + T::name() + "' got '" + (*(m_lookahead_pos - 1))->dyn_name() + "' !");
         }
     }
 

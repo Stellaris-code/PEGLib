@@ -63,3 +63,15 @@ InputReader::FailurePolicy InputReader::failure_policy() const
 {
     return m_failure_policy;
 }
+
+FileInfo InputReader::current_pos() const
+{
+    if (m_lookahead_pos == m_terminals.begin())
+    {
+        return FileInfo{};
+    }
+    else
+    {
+        return (*m_lookahead_pos)->fileinfo;
+    }
+}

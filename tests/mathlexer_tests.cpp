@@ -149,20 +149,18 @@ TEST(MathMatching, True)
         InputReader reader(math_lex("5 + 3 - 2"));
         EXPECT_TRUE(Expr::match(reader));
     }
-    /*
     {
         InputReader reader(math_lex("5 + 3 - 2 +"));
-        EXPECT_FALSE(Expr::match(reader));
+        EXPECT_THROW(Expr::match(reader), ParseError);
     }
     {
         InputReader reader(math_lex("5 + 3 - 2 +/"));
-        EXPECT_FALSE(Expr::match(reader));
+        EXPECT_THROW(Expr::match(reader), ParseError);
     }
     {
         InputReader reader(math_lex("-5-"));
-        EXPECT_FALSE(Expr::match(reader));
+        EXPECT_THROW(Expr::match(reader), ParseError);
     }
-    */
     {
         InputReader reader(math_lex(""));
         EXPECT_FALSE(Expr::match(reader));

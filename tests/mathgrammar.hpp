@@ -54,11 +54,11 @@ struct NumberLitteral : public term<Number>
 
 struct Value;
 
-struct Product : public seq<Value, star<seq<term<ProductOperator>, Product>>>
+struct Product : public seq<Value, star<if_must<term<ProductOperator>, Product>>>
 {
 
 };
-struct Sum : public seq<Product, star<seq<term<SumOperator>, Sum>>>
+struct Sum : public seq<Product, star<if_must<term<SumOperator>, Sum>>>
 {
 
 };
@@ -66,7 +66,7 @@ struct Expr : public Sum
 {
 
 };
-struct Value : public seq<opt<term<SumOperator>>, _or<NumberLitteral, seq<term<LeftParenthesis>, Expr, term<RightParenthesis>>>>
+struct Value : public seq<opt<term<SumOperator>>, _or<NumberLitteral, if_must<term<LeftParenthesis>, Expr, term<RightParenthesis>>>>
 {
 
 };

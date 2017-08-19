@@ -21,6 +21,8 @@
 #include <string>
 #include <memory>
 
+#include "fileinfo.hpp"
+
 struct Terminal
 {
     virtual inline std::string dyn_name() const
@@ -40,13 +42,9 @@ struct Terminal
 
     std::string data;
 
-    struct FileInfo
-    {
-        std::string filename { "INVALID" };
-        int line { -1 };
-        int column { -1 };
-    } fileinfo;
+    FileInfo fileinfo;
 };
+
 
 #define MAKE_TERMINAL(TerminalName) \
 struct TerminalName : public Terminal \

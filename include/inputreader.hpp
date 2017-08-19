@@ -50,15 +50,7 @@ public:
     void set_failure_policy(FailurePolicy policy);
     FailurePolicy failure_policy() const;
 
-public:
-    struct ParseError : public std::runtime_error
-    {
-        ParseError(const std::string& error)
-            : std::runtime_error("Parsing error : " + error)
-        {
-
-        }
-    };
+    FileInfo current_pos() const;
 
 private:    
     FailurePolicy m_failure_policy { FailurePolicy::Strict };
