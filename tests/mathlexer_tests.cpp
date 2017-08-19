@@ -27,7 +27,7 @@ TEST(NumberMatching, Single)
 {
     {
         InputReader reader(math_lex("5"));
-        EXPECT_TRUE(Value::match(reader));
+        EXPECT_TRUE(NumberLitteral::match(reader));
     }
     {
         InputReader reader(math_lex("0"));
@@ -138,13 +138,31 @@ TEST(MathLex, True)
 TEST(MathMatching, True)
 {
     {
+        InputReader reader(math_lex("5 / 3"));
+        EXPECT_TRUE(Product::match(reader));
+    }
+    {
+        InputReader reader(math_lex("5 + 3"));
+        EXPECT_TRUE(Sum::match(reader));
+    }
+    {
         InputReader reader(math_lex("5 + 3 - 2"));
         EXPECT_TRUE(Expr::match(reader));
     }
+    /*
     {
         InputReader reader(math_lex("5 + 3 - 2 +"));
         EXPECT_FALSE(Expr::match(reader));
     }
+    {
+        InputReader reader(math_lex("5 + 3 - 2 +/"));
+        EXPECT_FALSE(Expr::match(reader));
+    }
+    {
+        InputReader reader(math_lex("-5-"));
+        EXPECT_FALSE(Expr::match(reader));
+    }
+    */
     {
         InputReader reader(math_lex(""));
         EXPECT_FALSE(Expr::match(reader));
@@ -154,11 +172,11 @@ TEST(MathMatching, True)
         EXPECT_FALSE(Expr::match(reader));
     }
     {
-        InputReader reader(math_lex("-5-"));
-        EXPECT_FALSE(Expr::match(reader));
+        InputReader reader(math_lex("-5.311*-2"));
+        EXPECT_TRUE(Expr::match(reader));
     }
     {
-        InputReader reader(math_lex("-5.311*-2"));
+        InputReader reader(math_lex("-5*(2/5)"));
         EXPECT_TRUE(Expr::match(reader));
     }
     {

@@ -67,17 +67,10 @@ struct seq : public GrammarRule<seq<Rules...>>
 {
     static bool match_impl(InputReader& reader)
     {
-        auto last_state = reader.policy(); // TODO : faire un système de pile de states
-        reader.set_policy(InputReader::Policy::Ignore);
         bool valid = seq_impl<Rules...>(reader);
-        reader.set_policy(last_state);
-        if (valid)
+        if (!valid)
         {
-            reader.consume();
-        }
-        else
-        {
-            reader.reset_lookahead();
+            reader.rewind();
         }
 
         return valid;
@@ -103,28 +96,31 @@ struct _or : public GrammarRule<_or<Rules...>>
 {
     static bool match_impl(InputReader& reader)
     {
-        return or_impl<Rules...>(reader);
+        auto prev_policy = reader.failure_policy();
+        reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
+
+        return or_impl<Rules...>(reader, prev_policy);
     }
 
 private:
     template <typename... None, typename std::enable_if_t<sizeof...(None) == 0>* = nullptr>
-    static bool or_impl(InputReader&)
+    static bool or_impl(InputReader& reader, InputReader::FailurePolicy prev_policy)
     {
+        reader.set_failure_policy(prev_policy);
         return false;
     }
 
     template <typename Rule, typename... Rest>
-    static bool or_impl(InputReader& reader)
+    static bool or_impl(InputReader& reader, InputReader::FailurePolicy prev_policy)
     {
         if (Rule::match(reader))
         {
-            reader.consume();
             return true;
         }
         else
         {
-            reader.reset_lookahead();
-            return or_impl<Rest...>(reader);
+            reader.rewind();
+            return or_impl<Rest...>(reader, prev_policy);
         }
     }
 };
@@ -134,9 +130,9 @@ struct star : public GrammarRule<star<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
-        while (Rule::match(reader)){}
+        reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        reader.consume();
+        while (Rule::match(reader)){}
 
         return true;
     }
@@ -147,11 +143,15 @@ struct plus : public GrammarRule<plus<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
-        if (!Rule::match(reader)) return false;
+        if (!Rule::match(reader))
+        {
+            reader.rewind();
+            return false;
+        }
+
+        reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
         while (Rule::match(reader)) {}
-
-        reader.consume();
 
         return true;
     }
@@ -162,13 +162,11 @@ struct opt : public GrammarRule<opt<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
-        if (Rule::match(reader))
+        reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
+
+        if (!Rule::match(reader))
         {
-            reader.consume();
-        }
-        else
-        {
-            reader.reset_lookahead();
+            reader.rewind();
         }
 
         return true;
@@ -180,8 +178,10 @@ struct _and : public GrammarRule<_and<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
+        reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
+
         bool result = Rule::match(reader);
-        reader.reset_lookahead();
+        reader.rewind();
         return result;
     }
 };
@@ -191,8 +191,10 @@ struct _not : public GrammarRule<_not<Rule>>
 {
     static bool match_impl(InputReader& reader)
     {
+        reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
+
         bool result = Rule::match(reader);
-        reader.reset_lookahead();
+        reader.rewind();
         return !result;
     }
 };

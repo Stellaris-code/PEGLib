@@ -23,7 +23,12 @@
 
 struct Terminal
 {
-    virtual inline std::string name() const
+    virtual inline std::string dyn_name() const
+    {
+        return "Terminal";
+    }
+
+    static inline std::string name()
     {
         return "Terminal";
     }
@@ -46,7 +51,11 @@ struct Terminal
 #define MAKE_TERMINAL(TerminalName) \
 struct TerminalName : public Terminal \
 { \
-    virtual inline std::string name() const override \
+    virtual inline std::string dyn_name() const override \
+    { \
+        return std::string(#TerminalName) + " ('" + data + "')"; \
+    } \
+    static inline std::string name() \
     { \
         return #TerminalName; \
     } \

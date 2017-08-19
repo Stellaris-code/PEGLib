@@ -26,49 +26,40 @@ InputReader::InputReader(std::vector<std::unique_ptr<Terminal>>&& symbols)
     m_terminals = std::move(symbols);
     std::reverse(m_terminals.begin(), m_terminals.end());
     clear_states();
-    reset_lookahead();
+    m_lookahead_pos = m_terminals.end();
 }
 
-void InputReader::reset_lookahead()
+void InputReader::rewind()
 {
-    m_lookahead_pos = m_terminals.end();
+    assert(!m_base_pos.empty());
+    while (m_lookahead_pos != m_base_pos.top())
+    {
+        ++m_lookahead_pos;
+    }
 }
 
 void InputReader::push_state()
 {
-    // TODO : implémenter !
+    m_base_pos.emplace(m_lookahead_pos);
 }
 
 void InputReader::pop_state()
 {
-    // TODO : implémenter !
+    m_base_pos.pop();
 }
 
 void InputReader::clear_states()
 {
-   decltype(m_base_pos)().swap(m_base_pos);
-   m_base_pos.push(m_terminals.begin());
+    decltype(m_base_pos)().swap(m_base_pos);
+    m_base_pos.emplace(m_terminals.end());
 }
 
-void InputReader::consume()
+void InputReader::set_failure_policy(InputReader::FailurePolicy policy)
 {
-    if (m_policy == InputReader::Policy::Consume)
-    {
-        while (m_terminals.end() != m_lookahead_pos)
-        {
-            assert(!m_terminals.empty());
-
-            m_terminals.pop_back();
-        }
-    }
+    m_failure_policy = policy;
 }
 
-void InputReader::set_policy(InputReader::Policy policy)
+InputReader::FailurePolicy InputReader::failure_policy() const
 {
-    m_policy = policy;
-}
-
-InputReader::Policy InputReader::policy() const
-{
-    return m_policy;
+    return m_failure_policy;
 }

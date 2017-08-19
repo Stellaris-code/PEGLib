@@ -54,11 +54,11 @@ struct NumberLitteral : public term<Number>
 
 struct Value;
 
-struct Sum : public seq<Value, star<seq<term<SumOperator>, Sum>>>
+struct Product : public seq<Value, star<seq<term<ProductOperator>, Product>>>
 {
 
 };
-struct Product : public seq<Value, star<seq<term<ProductOperator>, Product>>>
+struct Sum : public seq<Product, star<seq<term<SumOperator>, Sum>>>
 {
 
 };

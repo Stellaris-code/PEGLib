@@ -18,6 +18,7 @@
 #ifndef INPUTREADER_HPP
 #define INPUTREADER_HPP
 
+#include <stdexcept>
 #include <vector>
 #include <stack>
 #include <memory>
@@ -27,10 +28,10 @@
 class InputReader
 {
 public:
-    enum class Policy
+    enum class FailurePolicy
     {
-        Consume,
-        Ignore
+        Permissive,
+        Strict
     };
 
 public:
@@ -40,20 +41,27 @@ public:
     template <typename T>
     const Terminal* fetch();
 
-    void consume();
-
-    void reset_lookahead();
+    void rewind();
 
     void push_state();
     void pop_state();
     void clear_states();
 
-    void set_policy(Policy policy);
+    void set_failure_policy(FailurePolicy policy);
+    FailurePolicy failure_policy() const;
 
-    Policy policy() const;
+public:
+    struct ParseError : public std::runtime_error
+    {
+        ParseError(const std::string& error)
+            : std::runtime_error("Parsing error : " + error)
+        {
+
+        }
+    };
 
 private:    
-    Policy m_policy { Policy::Ignore };
+    FailurePolicy m_failure_policy { FailurePolicy::Strict };
 
     /// used in a FIFO way
     std::vector<std::unique_ptr<Terminal>> m_terminals;

@@ -22,17 +22,31 @@ template <typename T>
 const Terminal* InputReader::fetch()
 {
     static_assert(std::is_base_of_v<Terminal, T>);
-    if (m_lookahead_pos == m_terminals.cbegin())
+    if (m_lookahead_pos == m_terminals.begin())
     {
-        return nullptr;
+        if (failure_policy() == FailurePolicy::Permissive)
+        {
+            return nullptr;
+        }
+        else
+        {
+            throw ParseError("Expected '" + T::name() + "' got 'End Of File' !");
+        }
     }
 
     if (typeid(T) != typeid(**(m_lookahead_pos - 1)))
     {
-        return nullptr;
+        if (failure_policy() == FailurePolicy::Permissive)
+        {
+            return nullptr;
+        }
+        else
+        {
+            throw ParseError("Expected '" + T::name() + "' got '" + (*(m_lookahead_pos - 1))->dyn_name() + "' !");
+        }
     }
 
-    //std::cout << "Symbol read : " << (*(m_lookahead_pos - 1))->name() << "\n";
+    //std::cout << "Symbol read : " << (*(m_lookahead_pos - 1))->dyn_name() << "\n";
 
     return (*(--m_lookahead_pos)).get();
 }

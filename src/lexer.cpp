@@ -65,9 +65,10 @@ exit:
         }
     }
 
+    std::cout << "------------------\n";
     for (auto& sym : symbols)
     {
-        std::cout << sym->name() << "\n";
+        std::cout << sym->dyn_name() << "\n";
     }
 
     return symbols;
