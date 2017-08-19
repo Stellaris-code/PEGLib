@@ -28,7 +28,7 @@ assignement::= ident "=" expression
 call       ::= ident "(" expr ")"
 expression ::= term  (("+" | "-") term)*
 term       ::= factor (("*"|"/") factor)*
-factor     ::= constant | variable | "("  expression  ")"
+factor     ::= ("+"/"-") (constant | variable | "("  expression  ")")
 variable   ::= "x" | "y" | "z"
 constant   ::= digit+
 ident      ::= alpha alphanum*
@@ -39,7 +39,6 @@ digit      ::= "0" | "1" | "9"
 
 MAKE_TERMINAL(Number)
 MAKE_TERMINAL(Alpha)
-MAKE_TERMINAL(Ident)
 MAKE_TERMINAL(LeftParenthesis)
 MAKE_TERMINAL(RightParenthesis)
 MAKE_TERMINAL(RightBracket)
@@ -47,9 +46,8 @@ MAKE_TERMINAL(Semicolon)
 MAKE_TERMINAL(EqualOperator)
 MAKE_TERMINAL(SumOperator)
 MAKE_TERMINAL(ProductOperator)
-MAKE_TERMINAL(Minus)
 
-struct Constant : public term<Number>
+struct NumberLitteral : public term<Number>
 {
 
 };
@@ -68,7 +66,7 @@ struct Expr : public Sum
 {
 
 };
-struct Value : public _or<Constant, seq<opt<term<Minus>>, term<LeftParenthesis>, Expr, term<RightParenthesis>>>
+struct Value : public seq<opt<term<SumOperator>>, _or<NumberLitteral, seq<term<LeftParenthesis>, Expr, term<RightParenthesis>>>>
 {
 
 };

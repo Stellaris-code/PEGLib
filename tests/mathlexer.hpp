@@ -21,11 +21,10 @@
 #include "lexer.hpp"
 #include "mathgrammar.hpp"
 
-std::vector<std::unique_ptr<Terminal>> math_lex(const std::string& input)
+std::vector<std::unique_ptr<Terminal>> math_lex(std::string_view input)
 {
     Lexer lexer;
     lexer.add_def<Number>("\\d+\\.?\\d*");
-    lexer.add_def<Ident>("[a-zA-Z]+\\w*");
     lexer.add_def<Alpha>("[a-zA-Z]+");
     lexer.add_def<LeftParenthesis>("\\(");
     lexer.add_def<RightParenthesis>("\\)");
@@ -34,7 +33,6 @@ std::vector<std::unique_ptr<Terminal>> math_lex(const std::string& input)
     lexer.add_def<EqualOperator>("=");
     lexer.add_def<SumOperator>("\\+|\\-");
     lexer.add_def<ProductOperator>("\\*|\\/");
-    lexer.add_def<Minus>("\\-");
 
     return lexer.tokenize(input);
 }

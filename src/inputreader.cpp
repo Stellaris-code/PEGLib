@@ -19,10 +19,13 @@
 #include "inputreader.hpp"
 
 #include <cassert>
+#include <algorithm>
 
 InputReader::InputReader(std::vector<std::unique_ptr<Terminal>>&& symbols)
 {
     m_terminals = std::move(symbols);
+    std::reverse(m_terminals.begin(), m_terminals.end());
+    clear_states();
     reset_lookahead();
 }
 
@@ -39,6 +42,12 @@ void InputReader::push_state()
 void InputReader::pop_state()
 {
     // TODO : implémenter !
+}
+
+void InputReader::clear_states()
+{
+   decltype(m_base_pos)().swap(m_base_pos);
+   m_base_pos.push(m_terminals.begin());
 }
 
 void InputReader::consume()

@@ -16,12 +16,13 @@
 **  0. You just DO WHAT THE FUCK YOU WANT TO.
 */
 #include <cassert>
+#include <iostream>
 
 template <typename T>
 const Terminal* InputReader::fetch()
 {
     static_assert(std::is_base_of_v<Terminal, T>);
-    if (m_lookahead_pos == m_terminals.begin())
+    if (m_lookahead_pos == m_terminals.cbegin())
     {
         return nullptr;
     }
@@ -30,6 +31,8 @@ const Terminal* InputReader::fetch()
     {
         return nullptr;
     }
+
+    //std::cout << "Symbol read : " << (*(m_lookahead_pos - 1))->name() << "\n";
 
     return (*(--m_lookahead_pos)).get();
 }

@@ -165,12 +165,13 @@ struct opt : public GrammarRule<opt<Rule>>
         if (Rule::match(reader))
         {
             reader.consume();
-            return true;
         }
         else
         {
-            return false;
+            reader.reset_lookahead();
         }
+
+        return true;
     }
 };
 

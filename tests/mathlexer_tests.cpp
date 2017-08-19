@@ -27,36 +27,35 @@ TEST(NumberMatching, Single)
 {
     {
         InputReader reader(math_lex("5"));
-
-        EXPECT_TRUE(Constant::match(reader));
+        EXPECT_TRUE(Value::match(reader));
     }
     {
         InputReader reader(math_lex("0"));
-        EXPECT_TRUE(Constant::match(reader));
+        EXPECT_TRUE(Value::match(reader));
     }
 }
 
 TEST(NumberMatching, Negative)
 {
     InputReader reader(math_lex("-6"));
-    EXPECT_TRUE(Constant::match(reader));
+    EXPECT_TRUE(Value::match(reader));
 }
 
 TEST(NumberMatching, Float)
 {
     InputReader reader(math_lex("5.755"));
-    EXPECT_TRUE(Constant::match(reader));
+    EXPECT_TRUE(Value::match(reader));
 }
 
 TEST(NumberMatching, MultipleDigits)
 {
     {
         InputReader reader(math_lex("666"));
-        EXPECT_TRUE(Constant::match(reader));
+        EXPECT_TRUE(Value::match(reader));
     }
     {
         InputReader reader(math_lex("123456"));
-        EXPECT_TRUE(Constant::match(reader));
+        EXPECT_TRUE(Value::match(reader));
     }
 }
 
@@ -64,11 +63,11 @@ TEST(NumberMatching, DoNoMatch)
 {
     {
         InputReader reader(math_lex("abc"));
-        EXPECT_FALSE(Constant::match(reader));
+        EXPECT_FALSE(Value::match(reader));
     }
     {
         InputReader reader(math_lex("as55"));
-        EXPECT_FALSE(Constant::match(reader));
+        EXPECT_FALSE(Value::match(reader));
     }
     {
         auto read = []{InputReader reader(math_lex("5.5.5"));};
@@ -76,7 +75,7 @@ TEST(NumberMatching, DoNoMatch)
     }
     {
         InputReader reader(math_lex(""));
-        EXPECT_FALSE(Constant::match(reader));
+        EXPECT_FALSE(Value::match(reader));
     }
     {
         auto read = []{InputReader reader(math_lex("..."));};
@@ -85,6 +84,54 @@ TEST(NumberMatching, DoNoMatch)
     {
         auto read = []{InputReader reader(math_lex("5_5"));};
         EXPECT_THROW(read(), Lexer::LexerError);
+    }
+}
+
+TEST(MathLex, True)
+{
+    {
+        InputReader reader(math_lex("1"));
+        EXPECT_TRUE(term<Number>::match(reader));
+    }
+    {
+        InputReader reader(math_lex("gilbert"));
+        EXPECT_TRUE(term<Alpha>::match(reader));
+    }
+    {
+        InputReader reader(math_lex("("));
+        EXPECT_TRUE(term<LeftParenthesis>::match(reader));
+    }
+    {
+        InputReader reader(math_lex(")"));
+        EXPECT_TRUE(term<RightParenthesis>::match(reader));
+    }
+    {
+        InputReader reader(math_lex(";"));
+        EXPECT_TRUE(term<Semicolon>::match(reader));
+    }
+    {
+        InputReader reader(math_lex(">"));
+        EXPECT_TRUE(term<RightBracket>::match(reader));
+    }
+    {
+        InputReader reader(math_lex("="));
+        EXPECT_TRUE(term<EqualOperator>::match(reader));
+    }
+    {
+        InputReader reader(math_lex("+"));
+        EXPECT_TRUE(term<SumOperator>::match(reader));
+    }
+    {
+        InputReader reader(math_lex("-"));
+        EXPECT_TRUE(term<SumOperator>::match(reader));
+    }
+    {
+        InputReader reader(math_lex("*"));
+        EXPECT_TRUE(term<ProductOperator>::match(reader));
+    }
+    {
+        InputReader reader(math_lex("/"));
+        EXPECT_TRUE(term<ProductOperator>::match(reader));
     }
 }
 

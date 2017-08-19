@@ -20,6 +20,8 @@
 
 #include "utils.hpp"
 
+#include <iostream>
+
 std::vector<std::unique_ptr<Terminal>> Lexer::tokenize(std::string_view input,
                                                        const std::string& file) const
 {
@@ -61,6 +63,11 @@ reloop:
 exit:
             ;
         }
+    }
+
+    for (auto& sym : symbols)
+    {
+        std::cout << sym->name() << "\n";
     }
 
     return symbols;

@@ -19,6 +19,7 @@
 #define INPUTREADER_HPP
 
 #include <vector>
+#include <stack>
 #include <memory>
 
 #include "terminal.hpp"
@@ -45,17 +46,22 @@ public:
 
     void push_state();
     void pop_state();
+    void clear_states();
 
     void set_policy(Policy policy);
 
     Policy policy() const;
 
-private:
+private:    
     Policy m_policy { Policy::Ignore };
 
     /// used in a FIFO way
     std::vector<std::unique_ptr<Terminal>> m_terminals;
-    decltype(m_terminals)::iterator m_lookahead_pos { m_terminals.end() };
+    using terminal_iterator = decltype(m_terminals)::iterator;
+
+
+    terminal_iterator m_lookahead_pos { m_terminals.end() };
+    std::stack<terminal_iterator> m_base_pos { {m_terminals.begin()} };
 };
 
 #include "inputreader.tpp"
