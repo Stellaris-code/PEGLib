@@ -23,6 +23,9 @@
 #include <algorithm>
 #include <vector>
 
+template <typename...>
+struct always_false { static constexpr bool value = false; };
+
 inline bool is_whitespace(std::string_view str)
 {
     return std::all_of(str.begin(), str.end(), [](char c)

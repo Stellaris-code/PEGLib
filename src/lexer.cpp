@@ -1,3 +1,5 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 /*  lexer.cpp %{Cpp:License:ClassName} - Yann BOUCHER (yann) 18
 **
 **
@@ -65,11 +67,13 @@ exit:
         }
     }
 
+    /*
     std::cout << "------------------\n";
     for (auto& sym : symbols)
     {
         std::cout << sym->dyn_name() << "\n";
     }
+    */
 
     return symbols;
 }

@@ -24,7 +24,7 @@
 
 struct ParseError : public std::runtime_error
 {
-    ParseError(const std::string& error)
+    explicit ParseError(const std::string& error)
         : std::runtime_error("Parsing error : " + error)
     {
 

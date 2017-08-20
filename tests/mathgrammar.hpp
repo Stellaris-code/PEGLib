@@ -47,18 +47,18 @@ MAKE_TERMINAL(EqualOperator)
 MAKE_TERMINAL(SumOperator)
 MAKE_TERMINAL(ProductOperator)
 
-struct NumberLitteral : public term<Number>
+struct NumberLitteral : public seq<Number> // must use seq<>
 {
 
 };
 
 struct Value;
 
-struct Product : public seq<Value, star<if_must<term<ProductOperator>, Product>>>
+struct Product : public seq<Value, star<if_must<ProductOperator, Product>>>
 {
 
 };
-struct Sum : public seq<Product, star<if_must<term<SumOperator>, Sum>>>
+struct Sum : public seq<Product, star<if_must<SumOperator, Sum>>>
 {
 
 };
@@ -66,7 +66,7 @@ struct Expr : public Sum
 {
 
 };
-struct Value : public seq<opt<term<SumOperator>>, _or<NumberLitteral, if_must<term<LeftParenthesis>, Expr, term<RightParenthesis>>>>
+struct Value : public seq<opt<SumOperator>, _or<NumberLitteral, if_must<LeftParenthesis, Expr, RightParenthesis>>>
 {
 
 };

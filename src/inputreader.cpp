@@ -1,3 +1,5 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 /*  inputreader.cpp %{Cpp:License:ClassName} - Yann BOUCHER (yann) 17
 **
 **
@@ -20,6 +22,8 @@
 
 #include <cassert>
 #include <algorithm>
+
+#include "terminal.hpp"
 
 InputReader::InputReader(std::vector<std::unique_ptr<Terminal>>&& symbols)
 {
@@ -69,6 +73,17 @@ FileInfo InputReader::current_pos() const
     if (m_lookahead_pos == m_terminals.begin())
     {
         return FileInfo{};
+    }
+    else if (m_lookahead_pos == m_terminals.end())
+    {
+        if (!m_terminals.empty())
+        {
+            return FileInfo{m_terminals.back()->fileinfo.filename, 0, 0}; // return beggining of file
+        }
+        else
+        {
+            return FileInfo{};
+        }
     }
     else
     {

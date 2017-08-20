@@ -24,26 +24,30 @@
 #include "parse_error.hpp"
 #include "demangle.hpp"
 
-template <typename Derived>
-struct GrammarRule
+template <typename Rule>
+inline bool match(InputReader& reader)
 {
-    static bool match(InputReader& reader)
+    if constexpr(std::is_base_of_v<Terminal, Rule>)
+    {
+        return reader.fetch<Rule>();
+    }
+    else
     {
         reader.push_state();
-        bool result = Derived::match_impl(reader);
+        bool result = Rule::match_impl(reader);
         reader.pop_state();
 
         return result;
     }
+}
 
-    [[noreturn]]
-    static void fail(InputReader& reader, const std::string& error)
-    {
-        throw_parse_error(reader.current_pos(), error);
-    }
-};
+[[noreturn]]
+inline void fail(InputReader& reader, const std::string& error)
+{
+    throw_parse_error(reader.current_pos(), error);
+}
 
-struct _true : GrammarRule<_true>
+struct _true
 {
     static bool match_impl(InputReader&)
     {
@@ -51,7 +55,7 @@ struct _true : GrammarRule<_true>
     }
 };
 
-struct _false : GrammarRule<_false>
+struct _false
 {
     static bool match_impl(InputReader&)
     {
@@ -59,19 +63,8 @@ struct _false : GrammarRule<_false>
     }
 };
 
-template <typename T>
-struct term : GrammarRule<term<T>>
-{
-    static_assert(std::is_base_of<Terminal, T>::value);
-
-    static bool match_impl(InputReader& reader)
-    {
-        return reader.fetch<T>();
-    }
-};
-
 template <typename... Rules>
-struct seq : GrammarRule<seq<Rules...>>
+struct seq
 {
     static bool match_impl(InputReader& reader)
     {
@@ -90,17 +83,17 @@ private:
     {
         if constexpr (sizeof...(Rest) == 0)
         {
-            return Rule::match(reader);
+            return match<Rule>(reader);
         }
         else
         {
-            return Rule::match(reader) && seq_impl<Rest...>(reader);
+            return match<Rule>(reader) && seq_impl<Rest...>(reader);
         }
     }
 };
 
 template <typename... Rules>
-struct _or : GrammarRule<_or<Rules...>>
+struct _or
 {
     static bool match_impl(InputReader& reader)
     {
@@ -121,7 +114,7 @@ private:
     template <typename Rule, typename... Rest>
     static bool or_impl(InputReader& reader, InputReader::FailurePolicy prev_policy)
     {
-        if (Rule::match(reader))
+        if (match<Rule>(reader))
         {
             return true;
         }
@@ -134,24 +127,24 @@ private:
 };
 
 template <typename Rule>
-struct star : GrammarRule<star<Rule>>
+struct star
 {
     static bool match_impl(InputReader& reader)
     {
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        while (Rule::match(reader)){}
+        while (match<Rule>(reader)){}
 
         return true;
     }
 };
 
 template <typename Rule>
-struct plus : GrammarRule<plus<Rule>>
+struct plus
 {
     static bool match_impl(InputReader& reader)
     {
-        if (!Rule::match(reader))
+        if (!match<Rule>(reader))
         {
             reader.rewind();
             return false;
@@ -159,20 +152,20 @@ struct plus : GrammarRule<plus<Rule>>
 
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        while (Rule::match(reader)) {}
+        while (match<Rule>(reader)) {}
 
         return true;
     }
 };
 
 template <typename Rule>
-struct opt : GrammarRule<opt<Rule>>
+struct opt
 {
     static bool match_impl(InputReader& reader)
     {
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        if (!Rule::match(reader))
+        if (!match<Rule>(reader))
         {
             reader.rewind();
         }
@@ -182,39 +175,39 @@ struct opt : GrammarRule<opt<Rule>>
 };
 
 template <typename Rule>
-struct _and : GrammarRule<_and<Rule>>
+struct _and
 {
     static bool match_impl(InputReader& reader)
     {
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        bool result = Rule::match(reader);
+        bool result = match<Rule>(reader);
         reader.rewind();
         return result;
     }
 };
 
 template <typename Rule>
-struct _not : GrammarRule<_not<Rule>>
+struct _not
 {
     static bool match_impl(InputReader& reader)
     {
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        bool result = Rule::match(reader);
+        bool result = match<Rule>(reader);
         reader.rewind();
         return !result;
     }
 };
 
 template <typename... Rule>
-struct must : GrammarRule<must<Rule...>>
+struct must
 {
     static bool match_impl(InputReader& reader)
     {
-        if (!seq<Rule...>::match(reader))
+        if (!match<seq<Rule...>>(reader))
         {
-            must::fail(reader, "Expected " + demangle<seq<Rule...>>());
+            fail(reader, "Expected " + demangle<seq<Rule...>>());
         }
         else
         {

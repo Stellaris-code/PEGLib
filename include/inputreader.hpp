@@ -23,7 +23,9 @@
 #include <stack>
 #include <memory>
 
-#include "terminal.hpp"
+#include "fileinfo.hpp"
+
+struct Terminal;
 
 class InputReader
 {

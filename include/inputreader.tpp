@@ -20,6 +20,8 @@
 
 #include "parse_error.hpp"
 
+#include "terminal.hpp"
+
 template <typename T>
 const Terminal* InputReader::fetch()
 {
