@@ -52,6 +52,8 @@ public:
     void set_failure_policy(FailurePolicy policy);
     FailurePolicy failure_policy() const;
 
+    std::vector<std::unique_ptr<Terminal>> current_input() const;
+
     FileInfo current_pos() const;
 
 private:    

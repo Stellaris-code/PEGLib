@@ -197,5 +197,6 @@ TEST(Terminal, Clone)
     EXPECT_TRUE(typeid(term.clone()) == typeid(std::unique_ptr<Terminal>));
     EXPECT_TRUE(typeid(clone) == typeid(std::unique_ptr<Terminal>));
     EXPECT_TRUE(token1.data == clone->data);
+    EXPECT_TRUE(begins_with(clone->dyn_name(), DummyToken1::name()));
 }
 }

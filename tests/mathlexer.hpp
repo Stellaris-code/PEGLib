@@ -21,7 +21,7 @@
 #include "lexer.hpp"
 #include "mathgrammar.hpp"
 
-std::vector<std::unique_ptr<Terminal>> math_lex(std::string_view input)
+inline std::vector<std::unique_ptr<Terminal>> math_lex(std::string_view input)
 {
     Lexer lexer;
     lexer.add_def<Number>("\\d+\\.?\\d*");

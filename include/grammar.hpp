@@ -23,9 +23,10 @@
 #include "inputreader.hpp"
 #include "parse_error.hpp"
 #include "demangle.hpp"
+#include "action.hpp"
 
-template <typename Rule>
-inline bool match(InputReader& reader)
+template <typename Rule, typename Data>
+inline bool match(InputReader& reader, Data&& data)
 {
     if constexpr(std::is_base_of_v<Terminal, Rule>)
     {
@@ -34,11 +35,22 @@ inline bool match(InputReader& reader)
     else
     {
         reader.push_state();
-        bool result = Rule::match_impl(reader);
+        bool result = Rule::match_impl(reader, data);
+        if (result)
+        {
+            Action<Rule>::apply(reader.current_input(), data);
+        }
         reader.pop_state();
 
         return result;
     }
+}
+
+template <typename Rule>
+inline bool match(InputReader& reader)
+{
+    char dummy;
+    return match<Rule>(reader, dummy);
 }
 
 [[noreturn]]
@@ -49,7 +61,8 @@ inline void fail(InputReader& reader, const std::string& error)
 
 struct _true
 {
-    static bool match_impl(InputReader&)
+    template <typename Data>
+    static bool match_impl(InputReader&, Data&&)
     {
         return true;
     }
@@ -57,7 +70,8 @@ struct _true
 
 struct _false
 {
-    static bool match_impl(InputReader&)
+    template <typename Data>
+    static bool match_impl(InputReader&, Data&&)
     {
         return false;
     }
@@ -66,9 +80,10 @@ struct _false
 template <typename... Rules>
 struct seq
 {
-    static bool match_impl(InputReader& reader)
+    template <typename Data>
+    static bool match_impl(InputReader& reader, Data&& data)
     {
-        bool valid = seq_impl<Rules...>(reader);
+        bool valid = seq_impl<Data, Rules...>(reader, data);
         if (!valid)
         {
             reader.rewind();
@@ -78,16 +93,16 @@ struct seq
     }
 
 private:
-    template <typename Rule, typename... Rest>
-    static bool seq_impl(InputReader& reader)
+    template <typename Data, typename Rule, typename... Rest>
+    static bool seq_impl(InputReader& reader, Data&& data)
     {
         if constexpr (sizeof...(Rest) == 0)
         {
-            return match<Rule>(reader);
+            return match<Rule>(reader, data);
         }
         else
         {
-            return match<Rule>(reader) && seq_impl<Rest...>(reader);
+            return match<Rule>(reader, data) && seq_impl<Data, Rest...>(reader, data);
         }
     }
 };
@@ -95,33 +110,34 @@ private:
 template <typename... Rules>
 struct _or
 {
-    static bool match_impl(InputReader& reader)
+    template <typename Data>
+    static bool match_impl(InputReader& reader, Data&& data)
     {
         auto prev_policy = reader.failure_policy();
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        return or_impl<Rules...>(reader, prev_policy);
+        return or_impl<Data, Rules...>(reader, prev_policy, data);
     }
 
 private:
-    template <typename... None, typename std::enable_if_t<sizeof...(None) == 0>* = nullptr>
-    static bool or_impl(InputReader& reader, InputReader::FailurePolicy prev_policy)
+    template <typename Data, typename... None, typename std::enable_if_t<sizeof...(None) == 0>* = nullptr>
+    static bool or_impl(InputReader& reader, InputReader::FailurePolicy prev_policy, Data&&)
     {
         reader.set_failure_policy(prev_policy);
         return false;
     }
 
-    template <typename Rule, typename... Rest>
-    static bool or_impl(InputReader& reader, InputReader::FailurePolicy prev_policy)
+    template <typename Data, typename Rule, typename... Rest>
+    static bool or_impl(InputReader& reader, InputReader::FailurePolicy prev_policy, Data&& data)
     {
-        if (match<Rule>(reader))
+        if (match<Rule>(reader, data))
         {
             return true;
         }
         else
         {
             reader.rewind();
-            return or_impl<Rest...>(reader, prev_policy);
+            return or_impl<Data, Rest...>(reader, prev_policy, data);
         }
     }
 };
@@ -129,11 +145,12 @@ private:
 template <typename Rule>
 struct star
 {
-    static bool match_impl(InputReader& reader)
+    template <typename Data>
+    static bool match_impl(InputReader& reader, Data&& data)
     {
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        while (match<Rule>(reader)){}
+        while (match<Rule>(reader, data)){}
 
         return true;
     }
@@ -142,9 +159,10 @@ struct star
 template <typename Rule>
 struct plus
 {
-    static bool match_impl(InputReader& reader)
+    template <typename Data>
+    static bool match_impl(InputReader& reader, Data&& data)
     {
-        if (!match<Rule>(reader))
+        if (!match<Rule>(reader, data))
         {
             reader.rewind();
             return false;
@@ -152,7 +170,7 @@ struct plus
 
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        while (match<Rule>(reader)) {}
+        while (match<Rule>(reader, data)) {}
 
         return true;
     }
@@ -161,11 +179,12 @@ struct plus
 template <typename Rule>
 struct opt
 {
-    static bool match_impl(InputReader& reader)
+    template <typename Data>
+    static bool match_impl(InputReader& reader, Data&& data)
     {
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        if (!match<Rule>(reader))
+        if (!match<Rule>(reader, data))
         {
             reader.rewind();
         }
@@ -177,11 +196,12 @@ struct opt
 template <typename Rule>
 struct _and
 {
-    static bool match_impl(InputReader& reader)
+    template <typename Data>
+    static bool match_impl(InputReader& reader, Data&& data)
     {
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        bool result = match<Rule>(reader);
+        bool result = match<Rule>(reader, data);
         reader.rewind();
         return result;
     }
@@ -190,11 +210,12 @@ struct _and
 template <typename Rule>
 struct _not
 {
-    static bool match_impl(InputReader& reader)
+    template <typename Data>
+    static bool match_impl(InputReader& reader, Data&& data)
     {
         reader.set_failure_policy(InputReader::FailurePolicy::Permissive);
 
-        bool result = match<Rule>(reader);
+        bool result = match<Rule>(reader, data);
         reader.rewind();
         return !result;
     }
@@ -203,9 +224,10 @@ struct _not
 template <typename... Rule>
 struct must
 {
-    static bool match_impl(InputReader& reader)
+    template <typename Data>
+    static bool match_impl(InputReader& reader, Data&& data)
     {
-        if (!match<seq<Rule...>>(reader))
+        if (!match<seq<Rule...>>(reader, data))
         {
             fail(reader, "Expected " + demangle<seq<Rule...>>());
         }

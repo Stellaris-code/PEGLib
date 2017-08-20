@@ -68,6 +68,20 @@ InputReader::FailurePolicy InputReader::failure_policy() const
     return m_failure_policy;
 }
 
+std::vector<std::unique_ptr<Terminal>> InputReader::current_input() const
+{
+    assert(!m_base_pos.empty());
+
+    std::vector<std::unique_ptr<Terminal>> terms;
+
+    for (auto it = m_lookahead_pos; it != m_base_pos.top(); ++it)
+    {
+        terms.emplace_back((*it)->clone());
+    }
+
+    return terms;
+}
+
 FileInfo InputReader::current_pos() const
 {
     if (m_lookahead_pos == m_terminals.begin())

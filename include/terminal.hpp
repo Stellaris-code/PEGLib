@@ -46,7 +46,7 @@ struct Terminal
 };
 
 
-// Metaclasses will be perfect for this
+// Metaclasses would be perfect for this
 
 #define MAKE_TERMINAL(TerminalName) \
 struct TerminalName : public Terminal \
